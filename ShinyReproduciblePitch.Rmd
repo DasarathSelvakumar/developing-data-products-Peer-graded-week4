@@ -1,0 +1,138 @@
+---
+title: "My Shiny App's Reproducible Pitch"
+author: "Dasarath S"
+date: "06 Nov 2020"
+output:
+  
+  ioslides_presentation: default
+  slidy_presentation: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Introduction
+
+Here I have created a presentation in order to make a reproducible pitch for my very first Shiny app. I have made a simple app that takes in initial conditions of a projectile and gives its various parameters. This is being made as a part of my coursework for developing data products by Coursera.
+
+This application makes use of:
+
+- Numerical Input Field
+- Slider Input Field
+- Button
+- Tab Switching
+
+## What is Shiny App
+
+Shiny is an R package that makes it easy to build interactive web apps straight from R. You can host standalone apps on a webpage or embed them in R Markdown documents or build dashboards.
+  
+A typical Shiny app will contain a Server.R and a Ui.R files. 
+
+The Ui.R file specifies how the web app looks like and has most of the html contents. It deals with taking the input from the user and serving back outputs to the user. 
+
+The Server.R file usually does all the calculation and has functions to manipulate data that has been received through the UI. It also serves back the output values to the UI to display to the user.
+
+## What is Projectile Motion?
+
+Projectile motion is the motion of an object thrown or projected into the air, subject to only the acceleration of gravity. 
+
+The beauty of projectile motion is that, the parameters like Time of Flight(TOF), Range and max Height of the projectile is soley dependent on the inital conditions - velocity and angle of projection.
+
+Our app is going to take in these as inputs and will compute and give us the parameters for us to use.
+
+## A closer look into the code
+
+This is the UI part of the Shiny app which defines the input and output boxes, buttons, sliders, etc.
+```{r, echo=TRUE, eval=FALSE}
+library(shiny)
+shinyUI(fluidPage(titlePanel("Projectile Motion Equation Solver"),
+                  sidebarLayout( sidebarPanel(helpText("This app calculates various parameters
+                                                       of a projectile based on the initial condition"),
+                         sliderInput("theta",label = h6("Pick the angle of projection"),
+                                      5,90,value = 30,step = 5),
+                         numericInput("velocity", label = h6("Enter the projectile velocity 
+                                       (in m/s)"), value = 10),
+                         actionButton("compute", label = "Compute"),
+                  ),   
+                                 
+                   mainPanel(
+                   tabsetPanel(
+                     tabPanel("Output",
+                              p(h5("Your entered values:")), textOutput("t_theta"),
+                              textOutput("t_velocity"),
+                              p(h5("Calculated values:")),
+                              textOutput("t_range"), textOutput("t_tof"), textOutput("t_height")
+                              ),
+                              tabPanel("Documentation",
+                              p(h4("Projectile Motion Solver:")),
+                              helpText("This application computes and returns various parameters
+                                       of a projectile like range, tof, max height, etc."),
+                                              HTML("<u><b>Formulae for Computation: </b></u>
+                                              <br> <br>
+                                              <b> Range = u<sup>2</sup>sin(2*theta)/g </b>
+                                              <br>
+                                              <b> TOF = 2u*sin(theta)/g </b>
+                                              <br>
+                                              <b> Max. Height = u<sup>2</sup>*sin<sup>2</sup>(theta)/2g </b>
+                                              <br>
+                                              <br>
+                                              where: <br>
+                                              u = Initial Velocity <br>
+                                              theta = Angle of projection <br>
+                                              g = Acceleration due to gravity <br>"
+                                              )                
+                                     )
+                                   )
+                                 )
+                  )
+))
+```
+
+## A deeper look into Server.R
+```{r, echo=TRUE, eval=FALSE}
+library(shiny)
+shinyServer(function(input, output) {
+    ans <- reactiveValues()
+    # Calculate the interest and amount    
+    observe({
+        input$compute
+        ans$range <- round(isolate({
+            input$velocity * input$velocity * sin(2*pi/180*input$theta) / 9.8 }),4)
+        ans$tof <- round(isolate({2 * input$velocity * sin(pi/180*input$theta) / 9.8}),4)
+        ans$height <- round(isolate({(input$velocity)^2 * (sin(pi/180*input$theta)^2) / (2* 9.8)}),4)
+    })
+    
+    # Display ans entered
+    output$t_velocity <- renderText({
+        paste("Projectile Velocity: ", isolate(input$velocity),"m/s")
+    })
+    
+    output$t_theta <- renderText({
+        paste("Angle of projection: ", isolate(input$theta),"deg")
+    })
+    
+    output$t_range <- renderText({
+        if(input$compute == 0) ""
+        else
+        paste("Range of Projectile: ", isolate(ans$range), "metres")
+    })
+    
+    output$t_tof <- renderText({
+        if(input$compute == 0) ""
+        else
+        paste("Time of Flight:", ans$tof, "secs")
+    })
+    
+    output$t_height <- renderText({
+        if(input$compute == 0) ""
+        else
+            paste("Max Height of Projectile:", ans$height, "metres")
+    })
+    
+})
+```
+
+
+
+
